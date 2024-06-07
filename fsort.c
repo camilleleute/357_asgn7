@@ -23,8 +23,7 @@ int fsort(
 void merge(void* base, size_t mid, size_t n, size_t width,
   	    int (*cmp)(const void *, const void *)) {
 	char * arr = (char *)base;
-	void * merged = malloc(n * width);
-
+	char * merged = malloc(n * width);
 	//make 2 sub arrays
 
 
@@ -62,30 +61,34 @@ void merge(void* base, size_t mid, size_t n, size_t width,
 int mergeSort(void *base, size_t n, size_t width, size_t min,
  int (*cmp)(const void *, const void *)) {
 	if (n < 2) return 0;
-	size_t mid = 0;
-	if (n%2 == 1) {
-		mid = ((n-1)/2) - 1;
-	} else {
-		mid = (n/2) - 1;
-	}
-		
+	size_t mid = n/2;
 	if (n > min) {
 		int fds[2];
-
+		if (pipe(fds) == -1) {
+        		perror("pipe");
+        		return 1;
+    		}
 		pid_t pid = fork();
 		if (pid == 0) { //child
 			close(fds[0]);
-			mergeSort((char *)base + mid * width, n - mid, width,min, cmp);
-        		write(fds[1], (char *)base + mid * width, (n - mid) * width);
-        		close(fds[1]);
-        		exit(0);
+			int x = mergeSort((char *)base + mid * width, n - mid, width,min, cmp);
+        		if (x == 0 ) {
+				write(fds[1], (char *)base + mid * width, (n - mid) * width);
+        		}
+			close(fds[1]);
+        		exit(x);
 		} else { //parent
+			int status;
 			close(fds[1]); 
 	       		mergeSort(base, mid, width,min, cmp);
-        		wait(NULL);
         		read(fds[0], (char *)base + mid * width, (n - mid) * width);
         		close(fds[0]);
-        		merge(base, mid, n, width, cmp);
+			waitpid(pid, &status, 0);
+			if (WIFEXITED(status) && WEXITSTATUS(status) == 0) {
+				 merge(base, mid, n, width, cmp);
+			} else {
+				return 1;
+			}
 		}	
 
 	} else {
