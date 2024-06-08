@@ -33,23 +33,23 @@ void merge(void* base, size_t mid, size_t n, size_t width,
 
 	while ((L < mid) && (R < n)) {
 		if ((cmp(arr + (L * width), (arr + (R *width)))) <= 0) {
-			memcpy((char *)merged + J * width, arr + L * width, width);
+			memcpy(merged + J * width, arr + L * width, width);
 			L++;
 		} else {
-			memcpy((char*)merged + J*width, arr + R*width, width);
+			memcpy(merged + J*width, arr + R*width, width);
 			R++;
 		}
 		J++;
 	}
 	
 	while (L < mid) {
-		memcpy((char *)merged + J * width, arr + L * width, width);
+		memcpy(merged + J * width, arr + L * width, width);
                 L++;
 		J++;
 	}
 
 	while (R < n) {
-		memcpy((char*)merged + J*width, arr + R*width, width);
+		memcpy(merged + J*width, arr + R*width, width);
                 R++;
 		J++;
 	}
@@ -69,6 +69,13 @@ int mergeSort(void *base, size_t n, size_t width, size_t min,
         		return 1;
     		}
 		pid_t pid = fork();
+		if (pid == -1) {
+			perror("fork failure");
+			close(fds[0]);
+			close(fds[1]);
+			return 1;
+		}
+		
 		if (pid == 0) { //child
 			close(fds[0]);
 			int x = mergeSort((char *)base + mid * width, n - mid, width,min, cmp);
